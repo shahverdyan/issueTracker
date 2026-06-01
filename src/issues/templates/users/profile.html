@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Profile - {{ profile_user.username }}</title>
+    <link rel="stylesheet" href="{% static 'css/users/profile.css'%}">
+</head>
+<body>
+	<main class="page">
+		<aside class="card profile-card">
+			<div class="avatar">
+				{% if profile_obj.avatar %}
+					<img src="{{ profile_obj.avatar.url }}" alt="Avatar of {{ profile_user.username }}">
+				{% else %}
+					{{ profile_user.username|slice:":2"|upper }}
+				{% endif %}
+			</div>
+
+			<h1 class="name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+			<div class="handle">@{{ profile_user.username }}</div>
+
+			<div class="metrics">
+				<div class="metric">
+					<strong>{{ open_assigned_issues }}</strong>
+					<span>Open Assigned Issues</span>
+				</div>
+				<div class="metric">
+					<strong>{{ watched_issues }}</strong>
+					<span>Watched Issues</span>
+				</div>
+				<div class="metric">
+					<strong>{{ comments_count }}</strong>
+					<span>Comments</span>
+				</div>
+			</div>
+
+			<div class="bio">{{ profile_obj.bio|default:"This user has not added a biography yet." }}</div>
+
+            {% if is_owner %}
+                <div class="api-key">
+                    API Key: (click to copy) <p class="api-key-text" onClick=" navigator.clipboard.writeText(this.textContent);">{{ profile_obj.api_key|default:"N/A" }}</p>
+                </div>
+            {% endif %}
+
+			<div class="meta-line" style="margin-bottom: 16px;">
+				<strong>Registered:</strong> {{ profile_user.date_joined|date:"d M Y" }}
+			</div>
+
+			<div class="profile-actions">
+				{% if is_owner %}
+				<a href="{% url 'profile_edit' profile_user.username %}" class="btn-edit">EDIT BIO</a>
+				{% endif %}
+				<a href="{% url 'issue_list' %}" class="btn-home">BACK TO ISSUES</a>
+				{% if is_owner %}
+				<form method="post" action="/accounts/logout/">
+					{% csrf_token %}
+					<button type="submit" class="btn-logout">LOG OUT</button>
+				</form>
+				{% endif %}
+			</div>
+		</aside>
+
+		<section class="card activity-card">
+			<div class="tabs">
+				<a href="?tab=assigned" class="{% if tab == 'assigned' %}active{% endif %}">Open Assigned Issues</a>
+                {% if is_owner %}
+				    <a href="?tab=watched" class="{% if tab == 'watched' %}active{% endif %}">Watched Issues</a>
+                {% endif %}
+				<a href="?tab=comments" class="{% if tab == 'comments' %}active{% endif %}">Comments</a>
+			</div>
+
+			<div class="content">
+				<div class="profile-header">
+					<div>
+						<h2>User Profile</h2>
+						<div class="meta-line">{{ profile_user.email|default:"No email available" }}</div>
+					</div>
+
+					{% if is_owner %}
+					<span class="owner-tag">Your profile</span>
+					{% endif %}
+				</div>
+
+				{% if tab == 'assigned' %}
+					<div class="issue-list">
+						{% for issue in items %}
+						<div class="issue-row">
+							<div class="issue-left">
+								<span class="badge-stack">
+									<span class="dot type-{{ issue.issue_type.name|lower }}"></span>
+									<span class="dot sev-{{ issue.issue_severity.name|lower }}"></span>
+									<span class="dot prio-{{ issue.priority.name|lower }}"></span>
+								</span>
+								<a href="{% url 'issue_detail' issue.id %}" class="issue-link">#{{ issue.id }}</a>
+								<a href="{% url 'issue_detail' issue.id %}" class="issue-subject">{{ issue.subject }}</a>
+							</div>
+							<div class="issue-status">{{ issue.status }}</div>
+							<div class="issue-date">{{ issue.modified_at|date:"d M Y" }}</div>
+						</div>
+						{% empty %}
+						<div class="empty-state">No issues to show.</div>
+						{% endfor %}
+					</div>
+				{% elif tab == 'watched' %}
+					<div class="issue-list">
+						{% for issue in items %}
+						<div class="issue-row">
+							<div class="issue-left">
+								<span class="badge-stack">
+									<span class="dot type-{{ issue.issue_type.name|lower }}"></span>
+									<span class="dot sev-{{ issue.issue_severity.name|lower }}"></span>
+									<span class="dot prio-{{ issue.priority.name|lower }}"></span>
+								</span>
+								<a href="{% url 'issue_detail' issue.id %}" class="issue-link">#{{ issue.id }}</a>
+								<a href="{% url 'issue_detail' issue.id %}" class="issue-subject">{{ issue.subject }}</a>
+							</div>
+							<div class="issue-status">{{ issue.status }}</div>
+							<div class="issue-date">{{ issue.modified_at|date:"d M Y" }}</div>
+						</div>
+						{% empty %}
+						<div class="empty-state">This user is not watching any issues yet.</div>
+						{% endfor %}
+					</div>
+				{% else %}
+					<div class="comment-list">
+						{% for comment in items %}
+						<div class="comment-row">
+							<a href="{% url 'issue_detail' comment.issue.id %}#comment-{{ comment.id }}">
+								#{{ comment.issue.id }} {{ comment.issue.subject }}
+							</a>
+							<p>{{ comment.body|truncatechars:160 }}</p>
+							<small>{{ comment.created_at|date:"d/m/Y H:i" }}</small>
+						</div>
+						{% empty %}
+						<div class="empty-state">This user has not posted any comments yet.</div>
+						{% endfor %}
+					</div>
+				{% endif %}
+			</div>
+		</section>
+	</main>
+</body>
+</html>

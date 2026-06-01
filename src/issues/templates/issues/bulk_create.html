@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bulk Create Issue</title>
+    <link rel="stylesheet" href="{% static 'css/issues/bulk_create.css'%}">
+</head>
+<body>
+<div class="create-container">
+    <h1 class="header-title">Bulk create issues</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-layout">
+
+            <div class="main-fields">
+                <label>
+                    <textarea name="list" class="text-area" placeholder="List issue subjects, one per line..."></textarea>
+                </label>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">CREATE</button>
+        <a href="{% url 'issue_list' %}" class="cancel-link">CANCEL</a>
+    </form>
+</div>
+
+</body>
+</html>

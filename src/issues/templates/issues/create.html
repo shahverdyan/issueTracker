@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New Issue</title>
+    <link rel="stylesheet" href="{% static 'css/issues/create.css'%}">
+</head>
+<body>
+
+<div class="create-container">
+    <h1 class="header-title">New issue</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-layout">
+
+            <div class="main-fields">
+                <input type="text" name="subject" class="subject-input" placeholder="Subject" required>
+
+                <a href="#" class="tag-link">Add tag +</a>
+
+                <textarea name="description" class="description-area" placeholder="Please add descriptive text to help others better understand this issue"></textarea>
+
+                <h2 class="attachment-title">Add attachments</h2>
+                <div class="drop-zone">
+                    <input type="file" id="files" name="files"/>
+                </div>
+            </div>
+
+            <div class="side-fields">
+
+                <div class="status-wrapper">
+                    <select name="status" class="status-select">
+                        {% for s in statuses %}
+                        <option value="{{ s.name }}" {% if s.is_default %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="side-group">
+                    <label class="side-label">Assigned to</label>
+                    <select name="assignee_id" class="side-select assign-select">
+                        <option value="">Unassigned</option>
+                        {% for user in assignable_users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="side-group">
+                    <label class="side-label">Type</label>
+                    <select name="issue_type" class="side-select">
+                        {% for t in issue_types %}
+                        <option value="{{ t.name }}" {% if t.is_default %}selected{% endif %}>{{ t.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="side-group">
+                    <label class="side-label">Severity</label>
+                    <select name="issue_severity" class="side-select">
+                        {% for s in severities %}
+                        <option value="{{ s.name }}" {% if s.is_default %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="side-group">
+                    <label class="side-label">Priority</label>
+                    <select name="priority" class="side-select">
+                        {% for p in priorities %}
+                        <option value="{{ p.name }}" {% if p.is_default %}selected{% endif %}>{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="side-group">
+                    <label class="side-label">Deadline</label>
+                    <input type="date" name="deadline" class="side-select">
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">CREATE</button>
+        <a href="{% url 'issue_list' %}" class="cancel-link">CANCEL</a>
+    </form>
+</div>
+
+</body>
+</html>

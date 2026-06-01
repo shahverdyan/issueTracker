@@ -1,0 +1,284 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Issue Tracker - Taiga Style</title>
+    <link rel="stylesheet" href="{% static 'css/issues/list.css'%}">
+</head>
+<body>
+<div class="container">
+    <form method="GET" action="{% url 'issue_list' %}" id="filter-form">
+        <input type="hidden" name="show_filters" value="{{ show_filters|yesno:'1,0' }}">
+
+        <div class="header-nav">
+            {% if show_filters %}
+            <a href="?show_filters=0" class="btn-action active">FILTERS ▴</a>
+            {% else %}
+            <a href="?show_filters=1" class="btn-action">FILTERS ▾</a>
+            {% endif %}
+
+            <div class="search-wrapper">
+                <input type="text" name="search" placeholder="Search subject or ID..." value="{{ search_query|default:'' }}">
+            </div>
+            <button type="submit" class="btn-action active">SEARCH</button>
+            <a href="{% url 'issue_create' %}" class="btn-new">+ NEW ISSUE</a>
+            <a href="{% url 'issue_bulk_create' %}" class="btn-bulk">BULK ADD</a>
+            <a href="{% url 'settings_view' %}" class="btn-settings">SETTINGS</a>
+            <a href="{% url 'profile_view' request.user.username %}" class="btn-profile">PROFILE</a>
+        </div>
+
+        <div class="main-layout">
+            {% if show_filters %}
+            <aside class="filters-sidebar">
+                <div class="sidebar-top">
+                    Filters ({{ issues.count }})
+                    <a href="?show_filters=1" style="color:var(--taiga-accent); font-size:10px; text-decoration:none;">CLEAR</a>
+                </div>
+
+                {% if selected_types or selected_severities or selected_statuses %}
+                <div class="filtered-by-box">
+                    <p style="color: #8bc34a; font-size: 10px; font-weight: bold; margin-bottom: 4px;">Filtered by:</p>
+                    {% for val in selected_types %}<span class="filter-tag">{{ val }}</span>{% endfor %}
+                    {% for val in selected_severities %}<span class="filter-tag">{{ val }}</span>{% endfor %}
+                    {% for val in selected_statuses %}<span class="filter-tag">{{ val }}</span>{% endfor %}
+                    {% for val in selected_priorities %}<span class="filter-tag">{{ val }}</span>{% endfor %}
+                </div>
+                {% endif %}
+
+                <details open>
+                    <summary>Type <span>▾</span></summary>
+                    <div class="filter-content">
+                        {% for t in all_types %}
+                        <label class="filter-label" style="border-left-color: {{ t.color }};">
+                            <div class="filter-item">
+                                <input type="checkbox" name="issue_type" value="{{ t.name }}" {% if t.name in selected_types %}checked{% endif %}>
+                                <span>{{ t.name }}</span>
+                            </div>
+                            <span class="count-pill">{{ t.issue_count }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </details>
+
+                <details open>
+                    <summary>Severity <span>▾</span></summary>
+                    <div class="filter-content">
+                        {% for s in all_severities %}
+                        <label class="filter-label" style="border-left-color: {{ s.color }};">
+                            <div class="filter-item">
+                                <input type="checkbox" name="issue_severity" value="{{ s.name }}" {% if s.name in selected_severities %}checked{% endif %}>
+                                <span>{{ s.name }}</span>
+                            </div>
+                            <span class="count-pill">{{ s.issue_count }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </details>
+
+                <details open>
+                    <summary>Priority <span>▾</span></summary>
+                    <div class="filter-content">
+                        {% for p in all_priorities %}
+                            <label class="filter-label" style="border-left-color: {{ p.color }};">
+                                <div class="filter-item">
+                                    <input type="checkbox" name="priority" value="{{ p.name }}" {% if p.name in selected_priorities %}checked{% endif %}>
+                                    <span>{{ p.name }}</span>
+                                </div>
+                                <span class="count-pill">{{ p.issue_count }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </details>
+
+                <details open>
+                    <summary>Status <span>▾</span></summary>
+                    <div class="filter-content">
+                        {% for st in all_statuses %}
+                        <label class="filter-label" style="border-left-color: {{ st.color }};">
+                            <div class="filter-item">
+                                <input type="checkbox" name="status" value="{{ st.name }}" {% if st.name in selected_statuses %}checked{% endif %}>
+                                <span>{{ st.name }}</span>
+                            </div>
+                            <span class="count-pill">{{ st.issue_count }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </details>
+
+                <details open>
+                    <summary>Assigned to <span>▾</span></summary>
+                    <div class="filter-content">
+                        <label class="filter-label">
+                            <div class="filter-item">
+                                <input type="checkbox" name="assigned_to" value="unassigned" {% if f_assignee == 'unassigned' %}checked{% endif %}>
+                                <div class="user-info">
+                                    <span class="user-avatar">--</span>
+                                    <span>Unassigned</span>
+                                </div>
+                            </div>
+                            <span class="count-pill">{{ unassigned_issues_count }}</span>
+                        </label>
+
+                        {% for u in users %}
+                        <label class="filter-label">
+                            <div class="filter-item">
+                                <input type="checkbox" name="assigned_to" value="{{ u.id }}" {% if f_assignee == u.id|slugify %}checked{% endif %}>
+                                <div class="user-info">
+
+                                    {% if u.profile.avatar %}
+                                        <img class="user-avatar" src="{{ u.profile.avatar.url }}" alt="N/A"/>
+                                    {% else %}
+                                        <span class="user-avatar">{{ u.username|slice:":2"|default:"--" }}</span>
+                                    {% endif %}
+
+                                    <span>{{ u.username }}</span>
+                                </div>
+                            </div>
+                            <span class="count-pill">{{ u.num_issues }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </details>
+                <button type="submit" class="btn-apply-filters">APPLY FILTERS</button>
+            </aside>
+            {% endif %}
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th width="80">
+                            <div class="th-content">TYPE
+                                <div class="sort-arrows">
+                                    <a href="?order_by=issue_type&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == 'issue_type' %}active{% endif %}">▲</a>
+                                    <a href="?order_by=-issue_type&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == '-issue_type' %}active{% endif %}">▼</a>
+                                </div>
+                            </div>
+                        </th>
+                        <th width="80">
+                            <div class="th-content">SEV.
+                                <div class="sort-arrows">
+                                    <a href="?order_by=issue_severity&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == 'issue_severity' %}active{% endif %}">▲</a>
+                                    <a href="?order_by=-issue_severity&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == '-issue_severity' %}active{% endif %}">▼</a>
+                                </div>
+                            </div>
+                        </th>
+                        <th width="80">
+                            <div class="th-content">PRIO.
+                                <div class="sort-arrows">
+                                    <a href="?order_by=priority&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == 'priority' %}active{% endif %}">▲</a>
+                                    <a href="?order_by=-priority&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == '-priority' %}active{% endif %}">▼</a>
+                                </div>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="th-content">ISSUE
+                                <div class="sort-arrows">
+                                    <a href="?order_by=subject&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == 'subject' %}active{% endif %}">▲</a>
+                                    <a href="?order_by=-subject&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == '-subject' %}active{% endif %}">▼</a>
+                                </div>
+                            </div>
+                        </th>
+                        <th width="180">
+                            <div class="th-content">STATUS
+                                <div class="sort-arrows">
+                                    <a href="?order_by=status&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == 'status' %}active{% endif %}">▲</a>
+                                    <a href="?order_by=-status&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == '-status' %}active{% endif %}">▼</a>
+                                </div>
+                            </div>
+                        </th>
+                        <th width="150">
+                            <div class="th-content">ASSIGNED TO
+                                <div class="sort-arrows">
+                                    <a href="?order_by=assignee&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == 'assignee' %}active{% endif %}">▲</a>
+                                    <a href="?order_by=-assignee&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == '-assignee' %}active{% endif %}">▼</a>
+                                </div>
+                            </div>
+                        </th>
+                        <th width="120">
+                            <div class="th-content">DEADLINE
+                                <div class="sort-arrows">
+                                    <a href="?order_by=deadline&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == 'deadline' %}active{% endif %}" >▲</a>
+                                    <a href="?order_by=-deadline&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == '-deadline' %}active{% endif %}" >▼</a>
+                                </div>
+                            </div>
+                        </th>
+                        <th width="120">
+                            <div class="th-content">MODIFIED
+                                <div class="sort-arrows">
+                                    <a href="?order_by=modified_at&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == 'modified_at' %}active{% endif %}">▲</a>
+                                    <a href="?order_by=-modified_at&show_filters={{ show_filters|yesno:'1,0' }}" class="{% if current_order == '-modified_at' %}active{% endif %}">▼</a>
+                                </div>
+                            </div>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for issue in issues %}
+                    <tr>
+                        <td align="center"><span class="dot" style="background-color: {{ issue.issue_type.color }};"></span></td>
+                        <td align="center"><span class="dot" style="background-color: {{ issue.issue_severity.color }};"></span></td>
+                        <td align="center"><span class="dot" style="background-color: {{ issue.priority.color }};"></span></td>
+                        <td>
+                            <a href="{% url 'issue_detail' issue.id %}" class="ref-number">#{{ issue.id }}</a>
+                            <a href="{% url 'issue_detail' issue.id %}" class="subject-link">{{ issue.subject }}</a>
+                        </td>
+                        <td>
+                            <div style="display:flex; align-items:center;">
+                                <select name="status" form="update-form-{{ issue.id }}" style="padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 13px; flex-grow:1;">
+                                    {% for st in all_statuses %}
+                                    <option value="{{ st.name }}" {% if issue.status.pk == st.pk %}selected{% endif %}>{{ st.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" form="update-form-{{ issue.id }}" class="btn-save-status">OK</button>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-info">
+                                {% if issue.assignee.profile.avatar %}
+                                    <img class="user-avatar" src="{{ issue.assignee.profile.avatar.url }}" alt="N/A"/>
+                                {% else %}
+                                    <span class="user-avatar">{{ issue.assignee.username|slice:":2"|default:"--" }}</span>
+                                {% endif %}
+
+                                {% if issue.assignee.username %}
+                                    <a class="user-name" href={% url 'profile_view' issue.assignee.username %}>{{ issue.assignee.username }}</a>
+                                {% else %}
+                                    <span class="user-name" >Unassigned</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="deadline-column">
+                            {% if issue.deadline %}
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <span style="color: #94a3b8; font-size: 12px;">{{ issue.deadline|date:"d M Y" }}</span>
+                                    {% if issue.creator == request.user %}
+                                        <form method="POST" action="{% url 'issue_update_status' issue.id %}" style="margin:0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="deadline" value="">
+                                            <button type="submit" class="btn-delete-deadline" title="Clear deadline">✕</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span style="color: #94a3b8; font-size: 12px;">No date</span>
+                            {% endif %}
+                        </td>
+                        <td style="color: #94a3b8; font-size: 12px;">{{ issue.modified_at|date:"d M Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+
+    {% for issue in issues %}
+    <form method="POST" action="{% url 'issue_update_status' issue.id %}" id="update-form-{{ issue.id }}">
+        {% csrf_token %}
+    </form>
+    {% endfor %}
+</div>
+</body>
+</html>
