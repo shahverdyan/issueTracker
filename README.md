@@ -7,7 +7,7 @@
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -21,7 +21,7 @@
 
 ---
 
-## ✨ Features
+## Features
 
 - **Issues** — full CRUD: create, list, edit, delete
 - **Inline editing** — update subject, description, status, assignee, type, severity, priority, deadline, and tags directly from the detail view
@@ -39,7 +39,7 @@
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 issueTracker/
@@ -69,7 +69,7 @@ issueTracker/
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.12+
 - Docker & Docker Compose
@@ -77,7 +77,7 @@ issueTracker/
 
 ---
 
-## 🚀 Local Setup — Backend
+## Local Setup — Backend
 
 **1. Clone the repository**
 
@@ -136,7 +136,7 @@ To enable GitHub login locally:
 
 ---
 
-## 🖥 Local Setup — Frontend
+## Local Setup — Frontend
 
 The frontend lives in a separate repository.
 
@@ -165,7 +165,7 @@ The frontend will be available at http://localhost:3000.
 
 ---
 
-## 📖 API Documentation
+## API Documentation
 
 The full API specification is at `api/api.yml` (OpenAPI 3.0).
 
